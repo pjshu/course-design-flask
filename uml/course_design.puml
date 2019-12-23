@@ -1,0 +1,106 @@
+@startuml
+
+
+class STUDENT{
+  #Integer ID
+  ..
+  String(128) NAME
+  String(128) SEX
+  Integer BIRTHDAY
+  String(128) NATIVE_PLACE
+  ..
+  +Integer CLASS
+  +Integer DEPARTMENT
+}
+note left: 学生个人信息表
+
+
+class CHANGE {
+  #Integer ID
+  ..
+  Integer REC_TIM
+  Text DESCRIPTION
+  ..
+  +Integer STUDENTID
+  +Integer CHANGE
+}
+note top: 学籍变更信息表
+
+class REWARD {
+  #Integer ID
+  ..
+  Integer REC_TIM
+  Text DESCRIPTION
+  Boolean ENABLE
+  ..
+  +Integer LEVELS
+  +Integer STUDENTID
+}
+note top: 奖励记录信息表
+
+class PUNISHMENT {
+  #Integer ID
+  ..
+  Integer REC_TIM
+  Text DESCRIPTION
+  Boolean ENABLE
+  ..
+  +Integer STUDENTID
+  +Integer LEVELS
+}
+note right: 处罚记录信息表
+
+
+
+class DEPARTMENT {
+  #Integer ID
+  String(128) NAME
+}
+note bottom: 院系信息表
+
+class CLASS {
+  #Integer ID
+  String(128) NAME
+  ..
+  Integer MONITOR
+}
+note bottom: 班级信息表
+
+
+class CHANGE_CODE {
+  #Integer CODE
+  ..
+  +Text DESCRIPTION
+}
+note bottom:学籍变动代码表
+
+class REWARD_LEVELS {
+  #Integer CODE
+  ..
+  +Text DESCRIPTION
+}
+note bottom:奖励等级代码表
+
+class PUNISH_LEVELS {
+  #Integer CODE
+  ..
+  +Text DESCRIPTION
+}
+note bottom: 处罚等级代码表
+
+STUDENT -- CLASS
+STUDENT -- DEPARTMENT
+STUDENT -- CHANGE
+STUDENT -- REWARD
+STUDENT -- PUNISHMENT
+CHANGE -- CHANGE_CODE
+REWARD -- REWARD_LEVELS
+PUNISHMENT -- PUNISH_LEVELS
+CLASS -- DEPARTMENT
+
+class 注释 {
+  #主键
+  ..
+  +外键
+}
+@enduml
