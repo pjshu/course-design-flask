@@ -31,7 +31,7 @@ def test_organization_department(client):
 
 # 测试获取所有班级信息
 def test_organization_classes(client):
-    res = client.get(url_for('api.organization', type_='class'), json={
+    res = client.post(url_for('api.organization', type_='class'), json={
         "org_id": 1
     })
     assert b'success' in res.data
@@ -40,7 +40,7 @@ def test_organization_classes(client):
 
 # 测试获取班级所有学生信息
 def test_organization_student(client):
-    res = client.get(url_for('api.organization', type_='student'), json={
+    res = client.post(url_for('api.organization', type_='student'), json={
         "org_id": 1
     })
     students = res.get_json().get('data')
@@ -74,9 +74,8 @@ def test_student(client):
 def test_publish(client):
     res = client.post(url_for('api.change_state', type_='punish'), json={
         "student_id": random.choice(student),
-        "levels": random.randint(0, 4),
+        "levels": random.randint(0, 5),
         "description": "",
-        "enable": True
     })
     assert b'success' in res.data
 
@@ -99,3 +98,24 @@ def test_change(client):
         "description": ""
     })
     assert b'success' in res.data
+
+
+def test_changes_punish(client):
+    res = client.get(url_for('api.changes', type_='punish'))
+    data = res.get_json()
+    assert b'success' in res.data
+    assert len(data.get('data')) != 0
+
+
+def test_changes_reward(client):
+    res = client.get(url_for('api.changes', type_='reward'))
+    data = res.get_json()
+    assert b'success' in res.data
+    assert len(data.get('data')) != 0
+
+
+def test_changes_change(client):
+    res = client.get(url_for('api.changes', type_='change'))
+    data = res.get_json()
+    assert b'success' in res.data
+    assert len(data.get('data')) != 0

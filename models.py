@@ -149,13 +149,16 @@ class Reward(BaseChange):
 # 处罚记录信息表
 class Punishment(BaseChange):
     __tablename__ = 'PUNISHMENT'
-    enable = NullColumn('ENABLE', db.Boolean, default=False)
     student_id = NullColumn('STUDENTID', db.Integer, db.ForeignKey('STUDENT.ID'))
     levels = NullColumn('LEVELS', db.Integer, db.ForeignKey('PUBLISH_LEVELS.CODE'))
 
     @property
     def change_description(self):
         return Publish_levels.query.get(self.levels).description
+
+    @property
+    def enable(self):
+        return self.levels != 0
 
 
 class BaseLevel(Base):
@@ -166,6 +169,10 @@ class BaseLevel(Base):
     def __init__(self, code, description):
         self.description = description
         self.code = code
+
+    @classmethod
+    def all(cls):
+        return cls.query.all()
 
 
 # 学籍变动代码表
@@ -202,4 +209,10 @@ models = {
     "punish": Punishment,
     "reward": Reward,
     "change": Change,
+}
+
+level_models = {
+    "punish": Publish_levels,
+    "reward": Reward_levels,
+    "change": Change_code,
 }

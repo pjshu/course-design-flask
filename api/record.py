@@ -2,7 +2,7 @@ from flask import jsonify
 from flask import request
 
 from .blueprint import api
-from ..models import Student, Class, models, organizations
+from ..models import Student, Class, models, organizations, level_models
 
 
 def generate_res(status, data=None):
@@ -13,7 +13,7 @@ def generate_res(status, data=None):
 
 
 # 获取所有学院信息,一个学院所有班级信息,一个班级所有学生信息
-@api.route("/organization/<string:type_>/")
+@api.route("/organization/<string:type_>/", methods=["POST", "GET"])
 def organization(type_):
     data = request.get_json() or {}
     org_members = organizations[type_](data.get('org_id'))
@@ -29,7 +29,7 @@ def organization(type_):
 
 
 # 按班级录入, 获取班级单个学生信息
-@api.route('/students/<int:sid>', methods=['GET'])
+@api.route('/students/<int:sid>')
 @api.route('/students/', methods=['POST'], defaults={'sid': ''})
 def record(sid):
     data = request.get_json()
@@ -50,14 +50,16 @@ def record(sid):
     return generate_res("success", data=stu.detail)
 
 
-@api.route('/students/state/<string:type_>', methods=["POST", "GET"])
+# 获取/修改 学生惩罚,奖励,学籍变更情况
+@api.route('/students/state/<string:type_>', methods=["POST"])
+@api.route('/students/state', defaults={"type_": ''})
 def change_state(type_):
     Model = models[type_]
     data = request.get_json()
     student_id = data.get('student_id')
     model = Model.query.filter_by(student_id=int(student_id)).first() or Model()
     if request.method == "POST":
-        # levels ,description,student_id, enable(bool)
+        # levels ,description,student_id
         state = "success"
         try:
             model.set_attrs(data)
@@ -70,6 +72,13 @@ def change_state(type_):
         data["description"] = model.change_description
     except:
         return generate_res("failed")
-    if type_ == 'punish':
-        data['enable'] = model.enable
+    return generate_res("success", data=data)
+
+
+@api.route('/changes/<string:type_>/')
+def changes(type_):
+    levels = level_models[type_].all()
+    data = []
+    for level in levels:
+        data.append({"code": level.code, "description": level.description})
     return generate_res("success", data=data)
