@@ -31,7 +31,15 @@ class Student(Base):
 
     def set_attrs(self, attrs: dict):
         blacklist = ["id", 'class_id']
+        change = ['punish', 'change', 'reward']
         for key, value in attrs.items():
+            if key in change:
+                model = models[key]
+                m = model.query.filter_by(student_id=int(self.id)).first() or model()
+                value['student_id'] = self.id
+                m.set_attrs(value)
+                m.auto_commit()
+                continue
             if hasattr(self, key) and key not in blacklist:
                 setattr(self, key, value)
 
@@ -43,19 +51,11 @@ class Student(Base):
         m = model.query.filter_by(student_id=self.id).first()
         if not m:
             return False
-        return m.change_description
-
-    @property
-    def punish(self):
-        return self._query_state(Punishment)
-
-    @property
-    def reward(self):
-        return self._query_state(Reward)
-
-    @property
-    def change(self):
-        return self._query_state(Change)
+        return {
+            "level_code": m.level_id,
+            "level": m.level,
+            "description": m.description,
+        }
 
     @property
     def detail(self):
@@ -65,9 +65,9 @@ class Student(Base):
             "sex": self.sex,
             "birthday": self._birthday,
             "native_place": self.native_place,
-            "change": self.change,
-            "punish": self.punish,
-            "reward": self.reward
+            "change": self._query_state(Punishment),
+            "punish": self._query_state(Reward),
+            "reward": self._query_state(Change)
         }
 
 
@@ -118,7 +118,7 @@ class BaseChange(Base):
         self.rec_tim = int(time.time())
 
     def set_attrs(self, attrs: dict):
-        blacklist = ["id", "rec_tim", 'description']
+        blacklist = ["id", "rec_tim"]
         for key, value in attrs.items():
             if hasattr(self, key) and key not in blacklist:
                 setattr(self, key, value)
@@ -128,33 +128,33 @@ class BaseChange(Base):
 class Change(BaseChange):
     __tablename__ = 'CHANGE'
     student_id = NullColumn('STUDENTID', db.Integer, db.ForeignKey('STUDENT.ID'))
-    levels = NullColumn('CHANGE', db.Integer, db.ForeignKey('CHANGE_CODE.CODE'))
+    level_id = NullColumn('CHANGE', db.Integer, db.ForeignKey('CHANGE_CODE.CODE'))
 
     @property
-    def change_description(self):
-        return Change_code.query.get(self.levels).description
+    def level(self):
+        return Change_code.query.get(self.level_id).description
 
 
 # 奖励记录信息表
 class Reward(BaseChange):
     __tablename__ = 'REWARD'
     student_id = NullColumn('STUDENTID', db.Integer, db.ForeignKey('STUDENT.ID'))
-    levels = NullColumn('LEVELS', db.Integer, db.ForeignKey('REWARD_LEVELS.CODE'))
+    level_id = NullColumn('LEVELS', db.Integer, db.ForeignKey('REWARD_LEVELS.CODE'))
 
     @property
-    def change_description(self):
-        return Reward_levels.query.get(self.levels).description
+    def level(self):
+        return Reward_levels.query.get(self.level_id).description
 
 
 # 处罚记录信息表
 class Punishment(BaseChange):
     __tablename__ = 'PUNISHMENT'
     student_id = NullColumn('STUDENTID', db.Integer, db.ForeignKey('STUDENT.ID'))
-    levels = NullColumn('LEVELS', db.Integer, db.ForeignKey('PUBLISH_LEVELS.CODE'))
+    level_id = NullColumn('LEVELS', db.Integer, db.ForeignKey('PUBLISH_LEVELS.CODE'))
 
     @property
-    def change_description(self):
-        return Publish_levels.query.get(self.levels).description
+    def level(self):
+        return Publish_levels.query.get(self.level_id).description
 
     @property
     def enable(self):
@@ -172,7 +172,8 @@ class BaseLevel(Base):
 
     @classmethod
     def all(cls):
-        return cls.query.all()
+        levels = cls.query.all()
+        return [{"code": level.code, "description": level.description} for level in levels]
 
 
 # 学籍变动代码表
@@ -198,12 +199,6 @@ class Publish_levels(BaseLevel):
     def __init__(self, code, description):
         super().__init__(code, description)
 
-
-organizations = {
-    "department": lambda _: Department.query.all(),
-    "class": lambda cid: Department.query.get(int(cid)).classes,
-    "student": lambda sid: Class.query.get(int(sid)).student
-}
 
 models = {
     "punish": Punishment,
