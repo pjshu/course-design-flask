@@ -1,1 +1,1 @@
-from . import blueprint, record, student, changes, departments, classes
+from . import blueprint, api

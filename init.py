@@ -1,3 +1,4 @@
+# 初始化数据库脚本
 from .constant import change, rewards, publishes, generate_departments, numbers
 from .models import Change_code, Reward_levels, Publish_levels, Department, Class
 

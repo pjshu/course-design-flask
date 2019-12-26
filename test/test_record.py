@@ -21,18 +21,19 @@ def test_departments(client):
 @pytest.mark.repeat(10)
 def test_record(client):
     res = client.post(url_for('api.record'), json={
-        "class_id": 1,
+        "class_id": 2,
         "name": fake.name(),
         "sex": random.choice(["男", "女"]),
         "birthday": int(time.time()),
-        "native_place": fake.address()
+        "native_place": fake.address(),
+        "monitor": False
     })
     assert b'success' in res.data
 
 
 # 测试获取班级所有学生
 def test_classes(client):
-    res = client.get(url_for('api.classes', cid=1))
+    res = client.get(url_for('api.classes', cid=2))
     data = res.get_json().get('data')
     global student
     student = [s['id'] for s in data]
@@ -43,21 +44,23 @@ def test_classes(client):
 def test_student_info(client):
     student_id = random.choice(student)
     res = client.post(url_for('api.student', sid=student_id), json={
+        "id": student_id,
         "class_id": 2,
         "name": fake.name(),
         "sex": random.choice(["男", "女"]),
         "birthday": int(time.time()),
         "native_place": fake.address(),
+        "monitor": True,
         "punish": {
-            "level_id": 1,
+            "level": "",
             "description": "test"
         },
         "reward": {
-            "level_id": 1,
+            "level": "系一等奖学金",
             "description": "test"
         },
         "change": {
-            "level_id": 1,
+            "level": "",
             "description": "test"
         }
     })

@@ -31,25 +31,25 @@ class Student(Base):
     class_id = NullColumn('CLASS', db.Integer, db.ForeignKey('CLASS.ID'))
 
     def set_attrs(self, attrs: dict):
-        blacklist = ["id"]
+        blacklist = ["id", "student_id"]
         change = ['punish', 'change', 'reward']
         for key, value in attrs.items():
             if not value:
                 continue
             if key in change and value['level']:
                 model = models[key]
-                m = model.query.filter_by(student_id=int(self.id)).first() or model()
+                m = model.query.filter_by(student_id=self.id).first() or model()
                 value['student_id'] = self.id
                 m.set_attrs(value)
                 m.auto_commit()
                 continue
             if hasattr(self, key) and key not in blacklist:
                 setattr(self, key, value)
+        self.auto_commit()
 
     @property
-    def _birthday(self):
-        date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.birthday))
-        return date.split()[0]
+    def birthday_(self):
+        return time.strftime("%Y-%m-%d", time.localtime(self.birthday))
 
     def _query_state(self, model):
         m = model.query.filter_by(student_id=self.id).first()
@@ -70,13 +70,14 @@ class Student(Base):
             "id": self.id,
             "name": self.name,
             "sex": self.sex,
-            "birthday": self._birthday,
+            "birthday": self.birthday_,
             "native_place": self.native_place,
             "classes": c['classes'],
             "department": c['department'],
             "change": self._query_state(Change),
             "punish": self._query_state(Punishment),
-            "reward": self._query_state(Reward)
+            "reward": self._query_state(Reward),
+            "monitor": self.is_monitor(),
         }
 
     def class_department(self):
@@ -86,6 +87,9 @@ class Student(Base):
             "classes": {"id": class_.id, "name": class_.name},
             "department": {"id": department.id, "name": department.name}
         }
+
+    def is_monitor(self):
+        return Class.query.get(self.class_id).monitor == self.id
 
 
 # 院系信息表
@@ -136,22 +140,22 @@ class BaseChange(Base):
         setattr(self, 'level_id', self.query_level_id(attrs['level']))
         setattr(self, 'student_id', attrs['student_id'])
 
+    def query_level_id(self, description):
+        m = level_models[self.level_model].query.filter_by(description=description).first()
+        return m.code
+
+    @property
+    def level(self):
+        des = level_models[self.level_model].query.get(self.level_id)
+        return des.description if des else None
+
 
 # 学籍变更信息表
 class Change(BaseChange):
     __tablename__ = 'CHANGE'
     student_id = NullColumn('STUDENTID', db.Integer, db.ForeignKey('STUDENT.ID'))
     level_id = NullColumn('CHANGE', db.Integer, db.ForeignKey('CHANGE_CODE.CODE'))
-
-    @property
-    def level(self):
-        des = Change_code.query.get(self.level_id)
-        return des.description if des else None
-
-    @staticmethod
-    def query_level_id(description):
-        m = Change_code.query.get(description=description).first()
-        return m.code
+    level_model = 'change'
 
 
 # 奖励记录信息表
@@ -159,16 +163,7 @@ class Reward(BaseChange):
     __tablename__ = 'REWARD'
     student_id = NullColumn('STUDENTID', db.Integer, db.ForeignKey('STUDENT.ID'))
     level_id = NullColumn('LEVELS', db.Integer, db.ForeignKey('REWARD_LEVELS.CODE'))
-
-    @property
-    def level(self):
-        des = Reward_levels.query.get(self.level_id)
-        return des.description if des else None
-
-    @staticmethod
-    def query_level_id(description):
-        r = Reward_levels.query.filter_by(description=description).first()
-        return r.code
+    level_model = 'reward'
 
 
 # 处罚记录信息表
@@ -176,20 +171,7 @@ class Punishment(BaseChange):
     __tablename__ = 'PUNISHMENT'
     student_id = NullColumn('STUDENTID', db.Integer, db.ForeignKey('STUDENT.ID'))
     level_id = NullColumn('LEVELS', db.Integer, db.ForeignKey('PUBLISH_LEVELS.CODE'))
-
-    @property
-    def level(self):
-        des = Publish_levels.query.get(self.level_id)
-        return des.description if des else None
-
-    @property
-    def enable(self):
-        return self.levels != 0
-
-    @staticmethod
-    def query_level_id(description):
-        p = Publish_levels.query.get(description=description).first()
-        return p.code
+    level_model = 'punish'
 
 
 class BaseLevel(Base):
@@ -211,24 +193,15 @@ class BaseLevel(Base):
 class Change_code(BaseLevel):
     __tablename__ = 'CHANGE_CODE'
 
-    def __init__(self, code, description):
-        super().__init__(code, description)
-
 
 # 奖励等级代码表
 class Reward_levels(BaseLevel):
     __tablename__ = 'REWARD_LEVELS'
 
-    def __init__(self, code, description):
-        super().__init__(code, description)
-
 
 # 惩罚等级代码表
 class Publish_levels(BaseLevel):
     __tablename__ = 'PUBLISH_LEVELS'
-
-    def __init__(self, code, description):
-        super().__init__(code, description)
 
 
 models = {
