@@ -31,8 +31,8 @@ def test_record(client):
 
 
 # 测试获取班级所有学生
-def test_students(client):
-    res = client.get(url_for('api.students', cid=1))
+def test_classes(client):
+    res = client.get(url_for('api.classes', cid=1))
     data = res.get_json().get('data')
     global student
     student = [s['id'] for s in data]
@@ -42,7 +42,7 @@ def test_students(client):
 # 修改学生信息
 def test_student_info(client):
     student_id = random.choice(student)
-    res = client.post(url_for('api.change_info', sid=student_id), json={
+    res = client.post(url_for('api.student', sid=student_id), json={
         "class_id": 2,
         "name": fake.name(),
         "sex": random.choice(["男", "女"]),
@@ -67,6 +67,5 @@ def test_student_info(client):
 def test_changes(client):
     res = client.get(url_for('api.changes'))
     data = res.get_json()
-    print(data)
     assert b'success' in res.data
     assert len(data.get('data')) != 0

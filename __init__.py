@@ -1,6 +1,7 @@
 import pymysql
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
 from .config import config
 
@@ -18,5 +19,5 @@ def create_app(config_name='default'):
 
     from .web.blueprint import main as main_blueprint
     app.register_blueprint(main_blueprint)
-
+    CORS(app)
     return app

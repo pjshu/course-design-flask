@@ -13,8 +13,9 @@ class Base(db.Model):
         db.session.add(self)
         try:
             db.session.commit()
-        except:
+        except Exception as e:
             db.session.rollback()
+            raise
 
 
 # 学生个人信息表
@@ -30,10 +31,12 @@ class Student(Base):
     class_id = NullColumn('CLASS', db.Integer, db.ForeignKey('CLASS.ID'))
 
     def set_attrs(self, attrs: dict):
-        blacklist = ["id", 'class_id']
+        blacklist = ["id"]
         change = ['punish', 'change', 'reward']
         for key, value in attrs.items():
-            if key in change:
+            if not value:
+                continue
+            if key in change and value['level']:
                 model = models[key]
                 m = model.query.filter_by(student_id=int(self.id)).first() or model()
                 value['student_id'] = self.id
@@ -45,29 +48,43 @@ class Student(Base):
 
     @property
     def _birthday(self):
-        return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.birthday))
+        date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.birthday))
+        return date.split()[0]
 
     def _query_state(self, model):
         m = model.query.filter_by(student_id=self.id).first()
         if not m:
-            return False
+            return {
+                "level": '',
+                "description": '',
+            }
         return {
-            "level_code": m.level_id,
-            "level": m.level,
+            "level": m.level or '',
             "description": m.description,
         }
 
     @property
     def detail(self):
+        c = self.class_department()
         return {
             "id": self.id,
             "name": self.name,
             "sex": self.sex,
             "birthday": self._birthday,
             "native_place": self.native_place,
-            "change": self._query_state(Punishment),
-            "punish": self._query_state(Reward),
-            "reward": self._query_state(Change)
+            "classes": c['classes'],
+            "department": c['department'],
+            "change": self._query_state(Change),
+            "punish": self._query_state(Punishment),
+            "reward": self._query_state(Reward)
+        }
+
+    def class_department(self):
+        class_ = Class.query.get(self.class_id)
+        department = Department.query.get(class_.department_id)
+        return {
+            "classes": {"id": class_.id, "name": class_.name},
+            "department": {"id": department.id, "name": department.name}
         }
 
 
@@ -113,15 +130,11 @@ class BaseChange(Base):
     rec_tim = NullColumn('REC_TIM', db.Integer)
     description = NullColumn('DESCRIPTION', db.Text)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.rec_tim = int(time.time())
-
     def set_attrs(self, attrs: dict):
-        blacklist = ["id", "rec_tim"]
-        for key, value in attrs.items():
-            if hasattr(self, key) and key not in blacklist:
-                setattr(self, key, value)
+        self.rec_tim = int(time.time())
+        setattr(self, 'description', attrs['description'])
+        setattr(self, 'level_id', self.query_level_id(attrs['level']))
+        setattr(self, 'student_id', attrs['student_id'])
 
 
 # 学籍变更信息表
@@ -132,7 +145,13 @@ class Change(BaseChange):
 
     @property
     def level(self):
-        return Change_code.query.get(self.level_id).description
+        des = Change_code.query.get(self.level_id)
+        return des.description if des else None
+
+    @staticmethod
+    def query_level_id(description):
+        m = Change_code.query.get(description=description).first()
+        return m.code
 
 
 # 奖励记录信息表
@@ -143,7 +162,13 @@ class Reward(BaseChange):
 
     @property
     def level(self):
-        return Reward_levels.query.get(self.level_id).description
+        des = Reward_levels.query.get(self.level_id)
+        return des.description if des else None
+
+    @staticmethod
+    def query_level_id(description):
+        r = Reward_levels.query.filter_by(description=description).first()
+        return r.code
 
 
 # 处罚记录信息表
@@ -154,11 +179,17 @@ class Punishment(BaseChange):
 
     @property
     def level(self):
-        return Publish_levels.query.get(self.level_id).description
+        des = Publish_levels.query.get(self.level_id)
+        return des.description if des else None
 
     @property
     def enable(self):
         return self.levels != 0
+
+    @staticmethod
+    def query_level_id(description):
+        p = Publish_levels.query.get(description=description).first()
+        return p.code
 
 
 class BaseLevel(Base):
