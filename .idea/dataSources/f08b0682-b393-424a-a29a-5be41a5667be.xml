@@ -42,7 +42,6 @@
 context_id
 fromno
 tono</ColNames>
-      <ColumnCollations></ColumnCollations>
       <Unique>1</Unique>
     </index>
     <key id="19" parent="6">
@@ -73,7 +72,6 @@ tono</ColNames>
     <index id="24" parent="7" name="sqlite_autoindex_context_1">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>context</ColNames>
-      <ColumnCollations></ColumnCollations>
       <Unique>1</Unique>
     </index>
     <key id="25" parent="7">
@@ -99,7 +97,6 @@ tono</ColNames>
     <index id="30" parent="9" name="sqlite_autoindex_file_1">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>path</ColNames>
-      <ColumnCollations></ColumnCollations>
       <Unique>1</Unique>
     </index>
     <key id="31" parent="9">
@@ -126,7 +123,6 @@ tono</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ColNames>file_id
 context_id</ColNames>
-      <ColumnCollations></ColumnCollations>
       <Unique>1</Unique>
     </index>
     <key id="37" parent="10">
@@ -155,7 +151,6 @@ context_id</ColNames>
     <index id="42" parent="11" name="sqlite_autoindex_meta_1">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>key</ColNames>
-      <ColumnCollations></ColumnCollations>
       <Unique>1</Unique>
     </index>
     <key id="43" parent="11">

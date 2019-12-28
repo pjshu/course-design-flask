@@ -1,6 +1,6 @@
-from . import create_app
+from . import create_app, db
 from .init import init
-from .models import db
+
 
 app = create_app()
 

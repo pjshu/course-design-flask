@@ -2,7 +2,8 @@ from flask import request
 
 from .blueprint import api
 from .utils import generate_res
-from ..models import level_models, Class, Department, Student
+from ..models.change import level_models
+from ..models.organization import Class, Department, Student
 
 
 # 获取punish_levels, reward_levels,change_levels
