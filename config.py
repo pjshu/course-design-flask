@@ -6,6 +6,12 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost:3306/course_design?charset=utf8mb4'
     SECRET_KEY = os.urandom(64)
+    FLASK_SLOW_DB_QUERY_TIME = 0.5
+    SQLALCHEMY_RECORD_QUERIES = True
+
+    @staticmethod
+    def init_app(app):
+        pass
 
 
 class ProductionConfig(Config):

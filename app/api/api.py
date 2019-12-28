@@ -1,4 +1,5 @@
-from flask import request
+from flask import request, current_app
+from flask_sqlalchemy import get_debug_queries
 
 from .blueprint import api
 from .utils import generate_res
@@ -67,3 +68,14 @@ def student(sid):
             class_.monitor = stu.id
             class_.auto_commit()
     return generate_res("success", data=stu.detail)
+
+
+# 查询性能分析
+@api.after_app_request
+def after_request(response):
+    for query in get_debug_queries():
+        if query.duration >= current_app.config['FLASK_SLOW_DB_QUERY_TIME']:
+            current_app.logger.warning(
+                f'缓慢的查询:{query.statement},\n参数值:{query.parameters},\n持续时间:{query.duration},\n 上下文:{query.context}'
+            )
+    return response

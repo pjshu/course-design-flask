@@ -1,7 +1,7 @@
 # 初始化数据库脚本
-from .constant import change, rewards, publishes, generate_departments, numbers
-from .models.change import Change_code, Reward_levels, Publish_levels
-from .models.organization import Department, Class
+from constant import change, rewards, publishes, generate_departments, numbers
+from app.models.change import Change_code, Reward_levels, Publish_levels
+from app.models.organization import Department, Class
 
 
 def commit_level(data, Model):
