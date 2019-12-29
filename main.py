@@ -1,4 +1,4 @@
-from . import create_app, db
+from app import create_app, db
 from init import init
 from flask_migrate import upgrade
 
