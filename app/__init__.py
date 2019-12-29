@@ -11,7 +11,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 
-def create_app(config_name='default'):
+def create_app(config_name):
     """
     静态资源配置 添加static_url_path='',否则前端访问static 下的图片出现问题
     参考 https://juejin.im/post/5b4aa6b1e51d45191d79da56

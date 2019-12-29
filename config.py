@@ -15,7 +15,7 @@ class Config:
 
 
 class ProductionConfig(Config):
-    pass
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:root@172.17.0.1:3306/course_design?charset=utf8mb4'
 
 
 class DevelopmentConfig(Config):

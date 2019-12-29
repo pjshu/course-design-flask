@@ -1,8 +1,9 @@
 from app import create_app, db
 from init import init
 from flask_migrate import upgrade
+import os
 
-app = create_app()
+app = create_app(os.getenv('FLASK_ENV') or 'default')
 
 
 @app.shell_context_processor
